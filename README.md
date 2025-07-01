@@ -23,5 +23,5 @@ Ce projet est une application de jeu de **Morpion (Tic-Tac-Toe)** multijoueur en
 1. **Cloner le projet :**
 
 ```bash
-git clone https://github.com/ton-utilisateur/morpion-socketio.git
-cd morpion-socketio
+git clone https://github.com/Manoa1105/Tic-Tac-Toe.git
+cd Tic-Tac-Toe
