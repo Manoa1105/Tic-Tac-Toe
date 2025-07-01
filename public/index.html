@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            color: #bb86fc;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            font-size: 2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1f1f1f;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .cell:hover {
+            background: #333333;
+            transform: scale(1.05);
+        }
+
+        .cell:active {
+            transform: scale(0.95);
+        }
+
+        #status {
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            color: #03dac6;
+        }
+
+        #reset {
+            padding: 10px 20px;
+            font-size: 1em;
+            color: #ffffff;
+            background-color: #bb86fc;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        #reset:hover {
+            background-color: #3700b3;
+        }
+
+        .win {
+            background-color: #4caf50 !important;
+        }
+
+        .draw {
+            background-color: #ffeb3b !important;
+        }
+
+        .choice-container {
+            margin-bottom: 20px;
+        }
+
+        .choice-container button {
+            padding: 10px 20px;
+            font-size: 1em;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #bb86fc;
+            color: #ffffff;
+            transition: background 0.3s ease;
+        }
+
+        .choice-container button:hover {
+            background-color: #3700b3;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Tic-Tac-Toe</h1>
+    <div id="status">Connexion...</div>
+    <div class="choice-container" id="choiceContainer">
+        <p>Choisissez votre symbole :</p>
+        <button id="chooseX">X</button>
+        <button id="chooseO">O</button>
+    </div>
+    <div class="board" id="gameBoard" style="display: none;">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+    <button id="reset" style="display: none;">Réinitialiser</button>
+
+    <script>
+        const socket = io();
+        let playerType = null;
+
+        // Afficher les boutons de choix et masquer le plateau au début
+        const choiceContainer = document.getElementById("choiceContainer");
+        const gameBoard = document.getElementById("gameBoard");
+        const resetButton = document.getElementById("reset");
+
+        // Gérer le choix du joueur
+        document.getElementById("chooseX").addEventListener("click", () => {
+            socket.emit("chooseSymbol", "X");
+            choiceContainer.style.display = "none";
+            gameBoard.style.display = "grid";
+            resetButton.style.display = "block";
+        });
+
+        document.getElementById("chooseO").addEventListener("click", () => {
+            socket.emit("chooseSymbol", "O");
+            choiceContainer.style.display = "none";
+            gameBoard.style.display = "grid";
+            resetButton.style.display = "block";
+        });
+
+        // Recevoir le symbole attribué par le serveur
+        socket.on("playerType", (type) => {
+            playerType = type;
+            document.getElementById("status").innerText = `Vous êtes le joueur ${type}`;
+        });
+
+        // Mettre à jour le plateau de jeu
+        socket.on("updateBoard", (board, currentPlayer) => {
+            document.querySelectorAll(".cell").forEach((cell, index) => {
+                cell.innerText = board[index] || "";
+            });
+            document.getElementById("status").innerText = `Tour du joueur ${currentPlayer}`;
+        });
+
+        // Gérer la fin du jeu
+        socket.on("gameOver", (result) => {
+            if (result === "draw") {
+                alert("Match nul !");
+            } else {
+                alert(`Le joueur ${result} a gagné !`);
+            }
+        });
+
+        // Réinitialiser le jeu
+        socket.on("resetGame", () => {
+            document.querySelectorAll(".cell").forEach(cell => {
+                cell.innerText = "";
+            });
+            document.getElementById("status").innerText = "Jeu réinitialisé. En attente d'un autre joueur...";
+        });
+
+        // Gérer les clics sur les cellules
+        document.querySelectorAll(".cell").forEach(cell => {
+            cell.addEventListener("click", () => {
+                if (playerType && !cell.innerText) {
+                    socket.emit("play", cell.dataset.index);
+                }
+            });
+        });
+
+        // Réinitialiser le jeu
+        document.getElementById("reset").addEventListener("click", () => {
+            socket.emit("reset");
+        });
+    </script>
+</body>
+
+</html>
